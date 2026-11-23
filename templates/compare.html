@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>核查结果：{{ a }} × {{ b }}</title>
+<style>
+  body{font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+       max-width:960px;margin:2rem auto;padding:0 1rem;color:#222}
+  table{border-collapse:collapse;width:100%;margin:.5rem 0}
+  th,td{border:1px solid #ccc;padding:.4rem .6rem;text-align:left}
+  th{background:#f2f2f2}
+  .warn{background:#fff7e0;border:1px solid #ec3;padding:.5rem;margin:.5rem 0}
+  .hint{color:#666;font-size:.9em}
+</style>
+</head>
+<body>
+<h1>核查结果：{{ a }} × {{ b }}</h1>
+
+<p>
+  汇总字节数：{{ a }} <strong>{{ size_a }}</strong> 字节；
+  {{ b }} <strong>{{ size_b }}</strong> 字节
+  （每人上限 131072 字节）。汇总版本：v{{ va }} / v{{ vb }}。
+</p>
+
+<table>
+  <tr><th>配对</th><th>计数</th></tr>
+  <tr><td>双方均「有坡道」</td><td>{{ n11 }}</td></tr>
+  <tr><td>{{ a }}「有坡道」、{{ b }}「无坡道」</td><td>{{ n10 }}</td></tr>
+  <tr><td>{{ a }}「无坡道」、{{ b }}「有坡道」</td><td>{{ n01 }}</td></tr>
+  <tr><td>双方均「无坡道」</td><td>{{ n00 }}</td></tr>
+  <tr><th>有效配对总数</th><th>{{ total }}</th></tr>
+</table>
+
+{% if kappa is not none %}
+<p>Cohen’s κ = <strong>{{ '%.4f'|format(kappa) }}</strong></p>
+{% else %}
+<p class="warn"><strong>无法比较：</strong>{{ kappa_error }}。</p>
+{% endif %}
+
+{% if dis_count %}
+<p>
+  分歧图号共 <strong>{{ dis_count }}</strong> 个。
+  <a href="{{ url_for('disagreements', a=a, b=b, va=va, vb=vb) }}">
+    下载分歧清单 CSV</a>（含双方判读，供抽查；与本次计数取自同一已提交状态）
+</p>
+{% else %}
+<p>无分歧图号。</p>
+{% endif %}
+
+<p><a href="{{ url_for('index') }}">返回首页</a></p>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>坡道标注核查</title>
+<style>
+  body{font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;
+       max-width:960px;margin:2rem auto;padding:0 1rem;color:#222}
+  table{border-collapse:collapse;width:100%;margin:.5rem 0}
+  th,td{border:1px solid #ccc;padding:.4rem .6rem;text-align:left}
+  th{background:#f2f2f2}
+  fieldset{margin:1rem 0;padding:1rem}
+  label{display:inline-block;margin:.3rem 1rem .3rem 0}
+  .msg-ok{background:#e6f6e6;border:1px solid #9c9;padding:.5rem;margin:.5rem 0}
+  .msg-err{background:#fdecec;border:1px solid #e99;padding:.5rem;margin:.5rem 0}
+  .hint{color:#666;font-size:.9em}
+</style>
+</head>
+<body>
+<h1>坡道标注核查</h1>
+
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% for cat, m in msgs %}
+    <div class="{{ 'msg-ok' if cat == 'ok' else 'msg-err' }}">{{ m }}</div>
+  {% endfor %}
+{% endwith %}
+
+<fieldset>
+  <legend>上传标注 CSV（按标注员）</legend>
+  <form method="post" action="{{ url_for('upload') }}" enctype="multipart/form-data">
+    <label>标注员 <input name="annotator" required maxlength="64"></label>
+    <label>CSV 文件 <input type="file" name="file" accept=".csv" required></label>
+    <button type="submit">上传</button>
+  </form>
+  <p class="hint">
+    CSV 每行「图号,标记」；图号 1～{{ max_image }}；标记为
+    <strong>有坡道 / 无坡道 / 看不清</strong> 三者之一；首行可为表头。
+    同人同图重复上传视为更正，只更新本人汇总；原始标注与汇总一同生效；
+    上传失败时沿用原数据。
+  </p>
+</fieldset>
+
+<fieldset>
+  <legend>两人一致性核查</legend>
+  {% if annotators|length >= 2 %}
+  <form method="get" action="{{ url_for('compare') }}">
+    <label>标注员 A
+      <select name="a">
+        {% for r in annotators %}<option value="{{ r.annotator }}">{{ r.annotator }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>标注员 B
+      <select name="b">
+        {% for r in annotators %}<option value="{{ r.annotator }}">{{ r.annotator }}</option>{% endfor %}
+      </select>
+    </label>
+    <button type="submit">核查</button>
+  </form>
+  <p class="hint">仅双方都判读为「有坡道/无坡道」的图参与配对；核查只读汇总。</p>
+  {% else %}
+  <p>至少需要两位已有汇总数据的标注员才能核查。</p>
+  {% endif %}
+</fieldset>
+
+<h2>标注员汇总</h2>
+<table>
+  <tr><th>标注员</th><th>累计标注条数</th><th>汇总字节数</th><th>版本</th><th>最近更新 (UTC)</th></tr>
+  {% for r in annotators %}
+  <tr>
+    <td>{{ r.annotator }}</td>
+    <td>{{ r.n }}</td>
+    <td>{{ r.size }}</td>
+    <td>v{{ r.version }}</td>
+    <td>{{ r.updated_at }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5">暂无数据</td></tr>
+  {% endfor %}
+</table>
+</body>
+</html>
